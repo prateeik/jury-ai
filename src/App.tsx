@@ -22,7 +22,8 @@ import {
   Terminal,
   ArrowRightLeft,
   Save,
-  GitCompare
+  GitCompare,
+  Lock
 } from "lucide-react";
 import { JurorId, Juror, DeliberationState, CrossExaminationState, SynthesisReport, LogEntry, PrecedentCase } from "./types";
 
@@ -682,7 +683,7 @@ export default function App() {
     JurorId.FIRST_PRINCIPLES
   ]);
 
-  const [activeTab, setActiveTab ] = useState<"deliberation" | "crossexam" | "synthesis" | "metrics" | "precedents">("deliberation");
+  const [activeTab, setActiveTab ] = useState<"welcome" | "deliberation" | "crossexam" | "synthesis" | "precedents" | "metrics" | "legal">("welcome");
   const [stage, setStage] = useState<"setup" | "deliberating" | "crossexam" | "synthesis" | "complete">("setup");
   const [deliberations, setDeliberations] = useState<Record<JurorId, DeliberationState>>({} as any);
   const [challenges, setChallenges] = useState<CrossExaminationState[]>([]);
@@ -727,6 +728,7 @@ export default function App() {
 
   const [selectedPrecedentId, setSelectedPrecedentId] = useState<string | null>(null);
   const [newPrecedentTitle, setNewPrecedentTitle] = useState<string>("");
+  const [selectedLegalDoc, setSelectedLegalDoc] = useState<"privacy" | "terms" | "api">("privacy");
 
   // Metacognitive calculations
   const calculateCognitiveBiasVariance = () => {
@@ -1131,6 +1133,9 @@ export default function App() {
     addLog("SYSTEM", "Debate state reset fully. Ready for new configuration.", "info");
   };
 
+  const isStep1Complete = query.trim().length >= 10;
+  const isStep2Complete = isStep1Complete && selectedJurors.length >= 3;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-rose-500 selection:text-white">
       {/* Title Header */}
@@ -1164,7 +1169,7 @@ export default function App() {
 
             <div className="flex items-center gap-2 text-[11px] font-mono bg-slate-900/60 text-slate-400 border border-slate-800/80 rounded-lg px-3 py-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>DEV PORTAL ON 3000</span>
+              <span>ENGINE ONLINE</span>
             </div>
           </div>
         </div>
@@ -1180,10 +1185,10 @@ export default function App() {
           <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 shadow-xl flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-slate-900 pb-3">
               <div className="flex items-center gap-2">
-                <Scale className="w-4 h-4 text-rose-500" />
-                <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase font-mono">The Proposition</h2>
+                <Scale className="w-4 h-4 text-rose-500 animate-pulse" />
+                <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase font-mono">01- The Proposition</h2>
               </div>
-              <span className="text-xs text-slate-500">Structured Trial</span>
+              <span className="text-[10px] bg-rose-950/40 text-rose-400 border border-rose-900/40 px-2 py-0.5 rounded font-mono uppercase">Formulation</span>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -1201,7 +1206,7 @@ export default function App() {
 
             {/* Historical context metrics */}
             <div className="bg-slate-950/80 border border-slate-900 p-3.5 rounded-lg flex flex-col gap-2.5 text-xs">
-              <div className="flex justify-between items-center text-slate-5100 hover:text-slate-200 transition-colors">
+              <div className="flex justify-between items-center text-slate-100 hover:text-white transition-colors">
                 <span className="flex items-center gap-1.5 text-slate-500">
                   <Cpu className="w-3.5 h-3.5 text-rose-500" />
                   Cognitive Bias Variance
@@ -1210,7 +1215,7 @@ export default function App() {
                   {calculateCognitiveBiasVariance().label}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-slate-5100 hover:text-slate-200 transition-colors">
+              <div className="flex justify-between items-center text-slate-100 hover:text-white transition-colors">
                 <span className="flex items-center gap-1.5 text-slate-500">
                   <Database className="w-3.5 h-3.5 text-sky-400" />
                   Precedent Alignments
@@ -1222,7 +1227,7 @@ export default function App() {
                   {precedents.length} stored {precedents.length === 1 ? "trial" : "trials"}
                 </button>
               </div>
-              <div className="flex justify-between items-center text-slate-5100 hover:text-slate-200 transition-colors">
+              <div className="flex justify-between items-center text-slate-100 hover:text-white transition-colors">
                 <span className="flex items-center gap-1.5 text-slate-500">
                   <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
                   Contradiction Warning
@@ -1242,90 +1247,126 @@ export default function App() {
             </div>
           </div>
 
-          {/* Roster Config Card */}
-          <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 shadow-xl flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-slate-900 pb-2">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-500" />
-                <h3 className="text-sm font-semibold tracking-wide text-slate-200 uppercase font-mono">Jury Roster</h3>
+          {/* Roster Config Card - Step 02 */}
+          {!isStep1Complete ? (
+            <div className="bg-slate-900/10 border border-slate-900/60 opacity-60 rounded-xl p-5 shadow-inner flex flex-col gap-3 justify-center items-center text-center py-10">
+              <Lock className="w-8 h-8 text-slate-500 mb-1" />
+              <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">02- Jury Roster Locked</span>
+              <p className="text-[11px] text-slate-500 max-w-[220px] leading-relaxed">
+                Please enter a valid proposition prompt in Step 01 (at least 10 characters) to unlock the Expert Jury roster selection.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 shadow-xl flex flex-col gap-4 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-emerald-500" />
+                  <h3 className="text-sm font-semibold tracking-wide text-slate-200 uppercase font-mono">02- Jury Roster</h3>
+                </div>
+                <span className="text-xs text-slate-300 font-mono font-semibold bg-emerald-950/40 text-emerald-400 px-2 py-0.5 border border-emerald-900/40 rounded">
+                  {selectedJurors.length}/6 Active
+                </span>
               </div>
-              <span className="text-xs text-slate-400">{selectedJurors.length}/6 Active</span>
-            </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Enable the multi-agent personas to deliberate on this inquiry. Selected jurors run concurrent peer analysis.
-            </p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Enable the multi-agent personas to deliberate on this inquiry. Selected jurors run concurrent peer analysis.
+              </p>
 
-            <div className="flex flex-col gap-2" id="juror-selection-container">
-              {ALL_JURORS.map((j) => {
-                const isActive = selectedJurors.includes(j.id);
-                return (
-                  <button
-                    key={j.id}
-                    onClick={() => handleToggleJuror(j.id)}
-                    disabled={stage !== "setup"}
-                    className={`flex items-center justify-between text-left p-2.5 rounded-lg border transition-all text-xs ${
-                      isActive 
-                        ? "bg-slate-900/90 border-slate-700 hover:border-slate-600 cursor-pointer" 
-                        : "bg-slate-950/40 border-slate-900/80 opacity-50 hover:opacity-75"
-                    } ${stage !== "setup" ? "opacity-90 hover:border-slate-800 cursor-not-allowed" : ""}`}
-                    id={`toggle-juror-${j.id}`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-rose-500 animate-pulse" : "bg-slate-700"}`}></span>
-                      <div>
-                        <div className="font-semibold text-slate-200 flex items-center gap-1.5">
-                          {j.name}
-                          <span className="text-[10px] font-mono text-slate-500">({j.id})</span>
+              <div className="flex flex-col gap-2" id="juror-selection-container">
+                {ALL_JURORS.map((j) => {
+                  const isActive = selectedJurors.includes(j.id);
+                  return (
+                    <button
+                      key={j.id}
+                      onClick={() => handleToggleJuror(j.id)}
+                      disabled={stage !== "setup"}
+                      className={`flex items-center justify-between text-left p-2.5 rounded-lg border transition-all text-xs ${
+                        isActive 
+                          ? "bg-slate-900/95 border-slate-700/80 hover:border-slate-600 cursor-pointer shadow-lg" 
+                          : "bg-slate-950/30 border-slate-900 opacity-65 hover:opacity-90"
+                      } ${stage !== "setup" ? "opacity-90 hover:border-slate-800 cursor-not-allowed" : ""}`}
+                      id={`toggle-juror-${j.id}`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-rose-500 animate-pulse" : "bg-slate-700"}`}></span>
+                        <div>
+                          <div className="font-semibold text-slate-200 flex items-center gap-1.5">
+                            {j.name}
+                            <span className="text-[10px] font-mono text-slate-500">({j.id})</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate max-w-[200px]">{j.role}</div>
                         </div>
-                        <div className="text-[10px] text-slate-500 truncate max-w-[200px]">{j.role}</div>
                       </div>
-                    </div>
-                    {isActive ? (
-                      <Check className="w-4 h-4 text-rose-500" />
-                    ) : (
-                      <span className="text-[10px] text-slate-600 font-mono">Offline</span>
-                    )}
-                  </button>
-                );
-              })}
+                      {isActive ? (
+                        <Check className="w-4 h-4 text-rose-500" />
+                      ) : (
+                        <span className="text-[10px] text-slate-600 font-mono">Offline</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          )}
 
-            {/* Stage Trigger Commands */}
-            <div className="flex flex-col gap-2 mt-2">
-              {stage === "setup" ? (
-                <>
-                  <button
-                    onClick={handleExecuteAIDeliberation}
-                    disabled={isLoading}
-                    className="w-full bg-rose-800 hover:bg-rose-700 active:bg-rose-900 text-white font-medium text-xs py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-rose-950/20 transition-all cursor-pointer"
-                    id="btn-run-live-ai"
-                  >
-                    <Cpu className="w-4 h-4" />
-                    {isLoading ? "Deliberating..." : "Execute Real-time AI Deliberation"}
-                  </button>
+          {/* 03- Execute Deliberation Suite Card */}
+          {isStep1Complete && (
+            <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 shadow-xl flex flex-col gap-4 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+                <div className="flex items-center gap-2">
+                  <Play className="w-4 h-4 text-rose-500 animate-pulse" />
+                  <h3 className="text-sm font-semibold tracking-wide text-slate-200 uppercase font-mono">03- Run Trial</h3>
+                </div>
+                {isStep2Complete ? (
+                  <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-900 px-2 py-0.5 rounded font-mono">Ready</span>
+                ) : (
+                  <span className="text-[10px] bg-amber-950 text-amber-400 border border-amber-900 px-2 py-0.5 rounded font-mono">Select 3+ Jurors</span>
+                )}
+              </div>
 
-                  <button
-                    onClick={runSimulatedDeliberation}
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium text-xs py-2.5 rounded-lg border border-slate-800 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                    id="btn-run-demo-sim"
-                  >
-                    <Play className="w-3.5 h-3.5 text-sky-400" />
-                    Run Demo Simulated Trial
-                  </button>
-                </>
-              ) : (
-                <div className="bg-slate-950 border border-slate-900 p-3 rounded-lg text-center">
-                  <span className="text-xs text-rose-400 font-mono font-semibold uppercase animate-pulse">
-                    Stage 1 Active
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Deliberations locked. Proceed with Cross Examination or Synthesis evaluation on the right side.
+              {!isStep2Complete ? (
+                <div className="text-center py-4">
+                  <p className="text-[11px] text-slate-500 max-w-[200px] mx-auto leading-relaxed">
+                    ⚠️ Please select a minimum of 3 active jurors in Step 02 to unlock Step 03- Trial execution.
                   </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 mt-2">
+                  {stage === "setup" ? (
+                    <>
+                      <button
+                        onClick={handleExecuteAIDeliberation}
+                        disabled={isLoading}
+                        className="w-full bg-rose-800 hover:bg-rose-700 active:bg-rose-900 text-white font-medium text-xs py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-rose-950/20 transition-all cursor-pointer"
+                        id="btn-run-live-ai"
+                      >
+                        <Cpu className="w-4 h-4" />
+                        {isLoading ? "Deliberating..." : "Execute Real-time AI Deliberation"}
+                      </button>
+
+                      <button
+                        onClick={runSimulatedDeliberation}
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium text-xs py-2.5 rounded-lg border border-slate-800 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                        id="btn-run-demo-sim"
+                      >
+                        <Play className="w-3.5 h-3.5 text-sky-400" />
+                        Run Demo Simulated Trial
+                      </button>
+                    </>
+                  ) : (
+                    <div className="bg-slate-950 border border-slate-900 p-3 rounded-lg text-center">
+                      <span className="text-xs text-rose-400 font-mono font-semibold uppercase animate-pulse">
+                        Stage 1 Active
+                      </span>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Deliberations locked. Proceed with Cross Examination or Synthesis evaluation on the right side.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </div>
+          )}
           
         </section>
 
@@ -1343,88 +1384,252 @@ export default function App() {
             </div>
           )}
 
-          {/* Nav Tabs */}
-          <div className="flex border-b border-slate-900 bg-slate-950/40 p-1 rounded-xl">
+          {/* Nav Tabs - Sleek Corporate Responsive Flex Grid */}
+          <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-slate-950/40 border border-slate-900/60 shadow-inner">
+            <button
+              onClick={() => setActiveTab("welcome")}
+              className={`px-3.5 py-2 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === "welcome" 
+                  ? "bg-rose-900/20 text-rose-400 border border-rose-800/60" 
+                  : "text-slate-400 hover:text-slate-200 border border-transparent"
+              }`}
+              id="tab-welcome-tour"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-rose-500" />
+              Welcome Tour
+            </button>
             <button
               onClick={() => setActiveTab("deliberation")}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-2 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "deliberation" 
-                  ? "bg-slate-900 text-white border-b-2 border-rose-500" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-900 text-slate-100 border border-slate-700/80" 
+                  : "text-slate-400 hover:text-slate-200 border border-transparent"
               }`}
               id="tab-deliberations"
             >
-              <Users className="w-3.5 h-3.5" />
-              1. Juror Deliberations
+              <Users className="w-3.5 h-3.5 text-rose-400" />
+              04- Juror Deliberations
             </button>
             <button
               onClick={() => setActiveTab("crossexam")}
-              disabled={stage === "setup"}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 ${
-                stage === "setup" ? "opacity-30 cursor-not-allowed" : "cursor-pointer"
-              } ${
+              className={`px-3.5 py-2 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "crossexam" 
-                  ? "bg-slate-900 text-white border-b-2 border-rose-500" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-900 text-slate-100 border border-slate-700/80" 
+                  : "text-slate-400 hover:text-slate-200 border border-transparent"
               }`}
               id="tab-cross-examinations"
             >
-              <ArrowRightLeft className="w-3.5 h-3.5" />
-              2. Cross Examination
+              <ArrowRightLeft className="w-3.5 h-3.5 text-amber-500" />
+              05- Cross Exam
             </button>
             <button
               onClick={() => setActiveTab("synthesis")}
-              disabled={stage === "setup"}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 ${
-                stage === "setup" ? "opacity-30 cursor-not-allowed" : "cursor-pointer"
-              } ${
+              className={`px-3.5 py-2 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "synthesis" 
-                  ? "bg-slate-900 text-white border-b-2 border-rose-500" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-900 text-slate-100 border border-slate-700/80" 
+                  : "text-slate-400 hover:text-slate-200 border border-transparent"
               }`}
               id="tab-judge-synthesis"
             >
-              <Gavel className="w-3.5 h-3.5" />
-              3. Consensus Report
+              <Gavel className="w-3.5 h-3.5 text-sky-400" />
+              06- Consensus
             </button>
             <button
               onClick={() => setActiveTab("precedents")}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-2 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "precedents" 
-                  ? "bg-slate-900 text-white border-b-2 border-rose-500" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-900 text-slate-100 border border-slate-700/80" 
+                  : "text-slate-400 hover:text-slate-200 border border-transparent"
               }`}
               id="tab-precedents-library"
             >
-              <Database className="w-3.5 h-3.5 text-sky-450 text-sky-400" />
-              Precedents ({precedents.length})
+              <Database className="w-3.5 h-3.5 text-emerald-400" />
+              07- Precedents ({precedents.length})
             </button>
             <button
               onClick={() => setActiveTab("metrics")}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-2 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "metrics" 
-                  ? "bg-slate-900 text-white border-b-2 border-rose-500" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-900 text-slate-100 border border-slate-700/80" 
+                  : "text-slate-400 hover:text-slate-200 border border-transparent"
               }`}
               id="tab-weight-metrics"
             >
-              <Terminal className="w-3.5 h-3.5" />
-              Runtime Logs
+              <Terminal className="w-3.5 h-3.5 text-indigo-400" />
+              08- Logs
+            </button>
+            <button
+              onClick={() => setActiveTab("legal")}
+              className={`px-3.5 py-2 rounded-lg text-xs font-mono font-semibold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === "legal" 
+                  ? "bg-slate-900 text-slate-100 border border-slate-700/80" 
+                  : "text-slate-400 hover:text-slate-200 border border-transparent"
+              }`}
+              id="tab-legal-privacy"
+            >
+              <FileText className="w-3.5 h-3.5 text-slate-400" />
+              09- Legal & Privacy
             </button>
           </div>
+
+          {/* TAB CONTENT: WELCOME TOUR */}
+          {activeTab === "welcome" && (
+            <div className="bg-slate-950/40 border border-slate-900 rounded-2xl p-6 md:p-8 flex flex-col gap-6 animate-fadeIn">
+              {/* Welcome Header */}
+              <div className="flex flex-col md:flex-row items-start gap-4 pb-6 border-b border-slate-900">
+                <div className="p-3.5 bg-rose-955/20 border border-rose-900/60 rounded-xl text-rose-500 shrink-0 shadow-lg shadow-rose-950/20">
+                  <Gavel className="w-7 h-7 animate-pulse text-rose-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-mono font-bold text-slate-100 uppercase tracking-wide flex items-center gap-2">
+                    JuryAI Dialectic Engine
+                    <span className="text-[10px] font-mono bg-rose-950 text-rose-400 border border-rose-900/60 px-2 py-0.5 rounded font-normal uppercase normal-case tracking-normal">Enterprise Sandbox</span>
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                    JuryAI is a <strong>metacognitive multi-agent policy simulation suite</strong>. 
+                    By combining custom strategic propositions with multiple divergent LLM expert personas, 
+                    the engine subjects business policies, pricing algorithms, or compliance standards to rigorous multi-bias peer reviews, 
+                    adversarial cross-examinations, and consolidated foreperson synthesis.
+                  </p>
+                </div>
+              </div>
+
+              {/* Complete System flow */}
+              <div>
+                <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider block mb-3">
+                  The Complete Multi-Agent Dialectic System Flow
+                </span>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-[10px] font-mono">
+                  <div className="p-3 bg-slate-900/30 border border-slate-900 rounded-xl flex flex-col items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 flex items-center justify-center font-bold">01</span>
+                    <span className="text-slate-200 font-bold">Formulation</span>
+                    <span className="text-slate-500 text-[9px] leading-tight">User input proposition</span>
+                  </div>
+                  <div className="p-3 bg-slate-900/30 border border-slate-900 rounded-xl flex flex-col items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-rose-955/20 border border-rose-900/50 text-rose-400 flex items-center justify-center font-bold">02</span>
+                    <span className="text-rose-400 font-bold">Deliberations</span>
+                    <span className="text-slate-500 text-[9px] leading-tight">Personas generate reports</span>
+                  </div>
+                  <div className="p-3 bg-slate-900/30 border border-slate-900 rounded-xl flex flex-col items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-amber-955/20 border border-amber-900/50 text-amber-400 flex items-center justify-center font-bold">03</span>
+                    <span className="text-amber-400 font-bold">Cross-Exams</span>
+                    <span className="text-slate-500 text-[9px] leading-tight">Hostile peer friction</span>
+                  </div>
+                  <div className="p-3 bg-slate-900/30 border border-slate-900 rounded-xl flex flex-col items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-sky-955/20 border border-sky-900/50 text-sky-400 flex items-center justify-center font-bold">04</span>
+                    <span className="text-sky-400 font-bold">Consensus</span>
+                    <span className="text-slate-500 text-[9px] leading-tight">Verdict scorecard & bias</span>
+                  </div>
+                  <div className="p-3 bg-slate-900/30 border border-slate-900 rounded-xl flex flex-col items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-emerald-955/20 border border-emerald-900/50 text-emerald-400 flex items-center justify-center font-bold">05</span>
+                    <span className="text-emerald-400 font-bold">Refinement</span>
+                    <span className="text-slate-500 text-[9px] leading-tight">Double-loop feedback</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Guided Instructions */}
+              <div className="flex flex-col gap-3">
+                <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider block">
+                  Dialectic Chamber Onboarding Checklist
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-slate-900/10 border border-slate-900/60 p-4 rounded-xl flex gap-3">
+                    <div className="text-xs font-mono font-bold text-rose-500 bg-rose-955/20 border border-rose-900/40 w-6 h-6 rounded-lg flex items-center justify-center shrink-0">1</div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">01- Formulate Proposition</h4>
+                      <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
+                        Enter any corporate plan, pricing scheme, algorithm, or code of conduct in the left-hand panel.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/10 border border-slate-900/60 p-4 rounded-xl flex gap-3">
+                    <div className="text-xs font-mono font-bold text-rose-500 bg-rose-955/20 border border-rose-900/40 w-6 h-6 rounded-lg flex items-center justify-center shrink-0">2</div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">02- Select Jury Roster</h4>
+                      <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
+                        Toggle specialized agent personas to represent distinct viewpoints (e.g. Scepticism, First Principles).
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/10 border border-slate-900/60 p-4 rounded-xl flex gap-3">
+                    <div className="text-xs font-mono font-bold text-rose-500 bg-rose-955/20 border border-rose-900/40 w-6 h-6 rounded-lg flex items-center justify-center shrink-0">3</div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">03- Run Multi-Agent Trial</h4>
+                      <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
+                        Initiate Stage 1 to generate detailed critiques using active AI agents or immediate high-fidelity simulation datasets.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/10 border border-slate-900/60 p-4 rounded-xl flex gap-3">
+                    <div className="text-xs font-mono font-bold text-rose-500 bg-rose-955/20 border border-rose-900/40 w-6 h-6 rounded-lg flex items-center justify-center shrink-0">4</div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">04- Peer Cross Examination</h4>
+                      <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
+                        Go to Stage 2, pick two opposing expert agents, and observe direct rebuttal clashes to test argument integrity.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/10 border border-slate-900/60 p-4 rounded-xl flex gap-3">
+                    <div className="text-xs font-mono font-bold text-rose-500 bg-rose-955/20 border border-rose-900/40 w-6 h-6 rounded-lg flex items-center justify-center shrink-0">5</div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">05- Foreperson Consensus Report</h4>
+                      <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
+                        Go to Stage 3 to review the aggregate scorecard, cognitive bias variance, agreement patterns, and policy warnings.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/10 border border-slate-900/60 p-4 rounded-xl flex gap-3">
+                    <div className="text-xs font-mono font-bold text-rose-500 bg-rose-955/20 border border-rose-900/40 w-6 h-6 rounded-lg flex items-center justify-center shrink-0">6</div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">06- Double-Loop Refinement</h4>
+                      <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
+                        Apply the automatically generated, vulnerability-adjusted proposition as a fresh iteration loop to test improvements.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fast Start Action Callout */}
+              <div className="mt-2 bg-gradient-to-r from-rose-950/20 to-slate-900/50 border border-rose-900/50 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-slate-300">
+                  <span className="font-bold text-rose-400 font-mono block text-sm mb-1">🚀 EXPERIMENT ONE-CLICK SIMULATION</span>
+                  Instantly load a pre-configured multi-agent dynamic pricing trial to observe the entire system in action.
+                </div>
+                <button
+                  onClick={() => {
+                    setQuery("A retail company wants to implement a fully automated AI system that dynamically changes product prices for online shoppers in real-time based on their estimated income bracket, web browsing history, and immediate demand. Is this an optimal and sustainable business strategy? Debate the long-term impact.");
+                    setSelectedJurors([
+                      JurorId.SKEPTIC,
+                      JurorId.LITERALIST,
+                      JurorId.EDGE_CASE_HUNTER,
+                      JurorId.SAFETY_GUARDIAN,
+                      JurorId.FIRST_PRINCIPLES
+                    ]);
+                    runSimulatedDeliberation();
+                    setActiveTab("deliberation");
+                  }}
+                  className="bg-rose-900 hover:bg-rose-800 text-white border border-rose-700 px-5 py-3 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition cursor-pointer shrink-0 shadow-lg shadow-rose-950/40"
+                >
+                  Launch Demo Trial
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* TAB CONTENT: DELIBERATION GRID */}
           {activeTab === "deliberation" && (
             <div className="flex flex-col gap-6">
               {stage === "setup" ? (
-                <div className="bg-slate-900/20 border border-slate-900 rounded-xl p-8 text-center flex flex-col items-center justify-center gap-4">
-                  <div className="p-4 bg-slate-950 border border-slate-800 rounded-full">
-                    <Scale className="w-8 h-8 text-slate-500 animate-pulse" />
+                <div className="bg-slate-950/45 border border-slate-900 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center justify-center gap-4 py-16 animate-fadeIn">
+                  <div className="p-4 bg-rose-950/30 border border-rose-900/40 rounded-full text-rose-500">
+                    <Users className="w-8 h-8 animate-pulse text-rose-500" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold font-mono text-slate-300">Jury Room Currently Dormant</h4>
-                    <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
-                      Select your trial jury roster on the left, then click <strong>AI Deliberation</strong> or <strong>Demo Simulation</strong> to trigger Stage 1 evaluation.
+                    <h4 className="text-sm font-semibold font-mono text-slate-200 uppercase tracking-wide">04- Juror Deliberations Pending</h4>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto mt-2 leading-relaxed">
+                      Chambers are currently empty. Formulate your proposition, select the roster on the left, and click <strong>Execute Real-time AI Deliberation</strong> or <strong>Run Demo Simulated Trial</strong> in Step 03 to unlock Stage 1 individual reports.
                     </p>
                   </div>
                 </div>
@@ -1559,8 +1764,22 @@ export default function App() {
           {activeTab === "crossexam" && (
             <div className="flex flex-col gap-6">
               
-              {/* Challenge Trigger Box */}
-              <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 shadow-xl flex flex-col gap-4">
+              {stage === "setup" ? (
+                <div className="bg-slate-950/45 border border-slate-900 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center justify-center gap-4 py-16 animate-fadeIn">
+                  <div className="p-4 bg-amber-955/20 border border-amber-900/40 rounded-full text-amber-500">
+                    <ArrowRightLeft className="w-8 h-8 text-amber-500 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold font-mono text-slate-200 uppercase tracking-wide">05- Cross Examination Pending</h4>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto mt-2 leading-relaxed">
+                      Cross examination clashes require active juror reports. First initiate deliberations in Step 03 of the left panel to establish foundational arguments.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Challenge Trigger Box */}
+                  <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 shadow-xl flex flex-col gap-4">
                 <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
                   <ArrowRightLeft className="w-4 h-4 text-emerald-500" />
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-200 font-mono">Stage 2: Instigate Friction Challenge Matches</h3>
@@ -1690,15 +1909,28 @@ export default function App() {
                   Initiate Stage 3: Deliberated Synthesis Report
                 </button>
               </div>
-
-            </div>
+            </>
           )}
+        </div>
+      )}
 
           {/* TAB CONTENT: FINAL SYNTHESIS & JUDGE REPORT */}
           {activeTab === "synthesis" && (
             <div className="flex flex-col gap-6">
               
-              {!synthesis ? (
+              {stage === "setup" ? (
+                <div className="bg-slate-950/45 border border-slate-900 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center justify-center gap-4 py-16 animate-fadeIn">
+                  <div className="p-4 bg-sky-955/20 border border-sky-900/40 rounded-full text-sky-400">
+                    <Gavel className="w-8 h-8 text-sky-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold font-mono text-slate-200 uppercase tracking-wide">06- Consensus Report Pending</h4>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto mt-2 leading-relaxed">
+                      Foreperson synthesis report generates a structured scorecard of vulnerabilities and amendment policies. Execute deliberations in Step 03 of the left panel to begin.
+                    </p>
+                  </div>
+                </div>
+              ) : !synthesis ? (
                 <div className="bg-slate-900/10 border border-slate-900 rounded-xl p-8 text-center text-slate-500 text-xs">
                   Synthesis report is empty. Please complete independent deliberations and trigger the "Final Synthesis" command down under Stage 2 to load results.
                 </div>
@@ -2153,6 +2385,152 @@ export default function App() {
                   <div className="bg-slate-900 p-2 rounded">
                     <span className="block text-[9px] text-slate-500">FIRST PRIN. WEIGHT</span>
                     <span className="text-violet-400 font-bold">1.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB CONTENT: LEGAL & PRIVACY */}
+          {activeTab === "legal" && (
+            <div className="bg-slate-900/30 border border-slate-900 rounded-xl p-5 md:p-6 flex flex-col gap-6 animate-fadeIn">
+              <div className="flex items-center gap-2.5 border-b border-slate-900 pb-3">
+                <FileText className="w-5 h-5 text-slate-400" />
+                <div>
+                  <h3 className="text-xs font-mono font-semibold uppercase text-slate-200 text-slate-100">Legal Compliance & Privacy Portal</h3>
+                  <p className="text-[10px] font-mono text-slate-500 mt-0.5">VERSION 2.4 • LAST UPDATED JUNE 2026</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                {/* Document Selector Sidebar */}
+                <div className="md:col-span-3 flex flex-row md:flex-col gap-2">
+                  <button
+                    onClick={() => setSelectedLegalDoc("privacy")}
+                    className={`text-left p-3 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                      selectedLegalDoc === "privacy"
+                        ? "bg-rose-955/20 border border-rose-900/60 text-rose-400"
+                        : "bg-slate-950/20 border border-transparent text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    Privacy Policy
+                  </button>
+                  <button
+                    onClick={() => setSelectedLegalDoc("terms")}
+                    className={`text-left p-3 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                      selectedLegalDoc === "terms"
+                        ? "bg-rose-955/20 border border-rose-900/60 text-rose-400"
+                        : "bg-slate-950/20 border border-transparent text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    Terms of Service
+                  </button>
+                  <button
+                    onClick={() => setSelectedLegalDoc("api")}
+                    className={`text-left p-3 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                      selectedLegalDoc === "api"
+                        ? "bg-rose-955/20 border border-rose-900/60 text-rose-400"
+                        : "bg-slate-950/20 border border-transparent text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    API Usage Policy
+                  </button>
+                </div>
+
+                {/* Policy text viewer */}
+                <div className="md:col-span-9 bg-slate-955/10 p-5 rounded-xl border border-slate-900 flex flex-col gap-5 leading-relaxed text-slate-300 text-xs">
+                  {selectedLegalDoc === "privacy" && (
+                    <>
+                      <div>
+                        <h4 className="text-sm font-bold text-white mb-2 font-mono uppercase tracking-wide">Privacy & Data Governance Policy</h4>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          At JuryAI, we take information privacy, enterprise data security, and client confidentiality with utmost seriousness. This document outlines how data flows, where it is cached, and your control rights under global data governance protocols.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <h5 className="font-bold text-slate-200 font-mono text-xs uppercase">1. Zero-Retention Model Pipeline</h5>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          The strategic propositions and query prompts entered into the dialectic engine are piped directly to secure, enterprise-tier Google Gemini models via secure transit. No inputs are stored or ever used to train public datasets.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <h5 className="font-bold text-slate-200 font-mono text-xs uppercase">2. Local Storage Cache & Session Life</h5>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          Precedent trial logs, custom juror roster selections, and debate brief cache variables are maintained locally within your browser's private secure namespace (LocalStorage). You have full authority to purge this container cache at any time.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <h5 className="font-bold text-slate-200 font-mono text-xs uppercase">3. Information Security Standards</h5>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          JuryAI operates behind industry-leading sandboxing. All real-time LLM agent requests are fully authenticated and filtered for safety violations, adversarial injection attempts, and intellectual property compliance.
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {selectedLegalDoc === "terms" && (
+                    <>
+                      <div>
+                        <h4 className="text-sm font-bold text-white mb-2 font-mono uppercase tracking-wide">Terms of Service Agreement</h4>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          Please review these Terms of Service carefully prior to utilizing the JuryAI dialectic stress-testing chamber. By initializing a trial simulation, you agree to comply with standard enterprise safety and fair usage directives.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <h5 className="font-bold text-slate-200 font-mono text-xs uppercase">1. Theoretical Simulation Boundary</h5>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          All agent evaluations, cross-examination clashes, and meta-synthesis Consensus reports are auto-generated theoretical stress-tests. They represent model-derived viewpoints meant strictly for risk mitigation planning and do not constitute actual legal advice.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <h5 className="font-bold text-slate-200 font-mono text-xs uppercase">2. Safe & Fair Usage Policy</h5>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          Users are strictly prohibited from generating propositions containing harmful, malicious, or hate-based text. Our moderation layer automatically suspends query pipelines that trigger safety policy alerts.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <h5 className="font-bold text-slate-200 font-mono text-xs uppercase">3. Output Copyright & IP ownership</h5>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          You retain 100% intellectual property ownership over the formulated propositions and custom-generated consensus amendment drafts derived from your active sessions.
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {selectedLegalDoc === "api" && (
+                    <>
+                      <div>
+                        <h4 className="text-sm font-bold text-white mb-2 font-mono uppercase tracking-wide">API Integration & Sovereignty Guidelines</h4>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          This section outlines rate limiting, API routing, and security tunneling rules established to protect both upstream server capacity and end-user request latency.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <h5 className="font-bold text-slate-200 font-mono text-xs uppercase">1. Pipeline Rate Limits</h5>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          Standard portal users are allocated up to 15 concurrent real-time AI deliberation rounds per hour to ensure equitable performance limits across concurrent developer sandboxes.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <h5 className="font-bold text-slate-200 font-mono text-xs uppercase">2. Upstream SLA Guarantee</h5>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          JuryAI leverages direct Google Cloud integrations offering an estimated 99.9% uptime for core agent generation pipelines, failing gracefully with local dynamic mock caching during extreme spike conditions.
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="border-t border-slate-900 pt-4 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <span>SECURITY STATUS: ACTIVE SECURE</span>
+                    <span>GDPR & ENTERPRISE ALIGNED</span>
                   </div>
                 </div>
               </div>
