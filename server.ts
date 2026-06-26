@@ -26,9 +26,9 @@ function getAI() {
   return aiClient;
 }
 
-// Highly robust helper running retries with model fallbacks (gemini-3.5-flash -> gemini-2.5-flash) and brief exponential backoff
+// Highly robust helper running retries with model fallbacks (gemini-3.5-flash -> gemini-flash-latest -> gemini-3.1-flash-lite -> gemini-2.5-flash) and brief backoff
 async function callGeminiWithFallback(systemInstruction: string, contents: string, config: any = {}): Promise<string> {
-  const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
+  const models = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
   let lastError: any = null;
 
   for (const model of models) {
@@ -49,7 +49,19 @@ async function callGeminiWithFallback(systemInstruction: string, contents: strin
         }
       } catch (err: any) {
         lastError = err;
-        console.warn(`[WARN] Attempt ${attempt} on model ${model} failed with error: ${err.message || err}`);
+        const errStr = err.message || String(err);
+        console.warn(`[WARN] Attempt ${attempt} on model ${model} failed with error: ${errStr}`);
+        
+        // Fail-fast on quota exhaustion (429/RESOURCE_EXHAUSTED) to prevent long sequential timeouts and engage local high-fidelity fallbacks instantly
+        const isQuotaExhausted = errStr.includes("RESOURCE_EXHAUSTED") || 
+                                 errStr.includes("quota") || 
+                                 errStr.includes("429") || 
+                                 (err.status && err.status === 429);
+        if (isQuotaExhausted) {
+          console.warn("[QUOTA_EXHAUSTED] API Quota or rate limit exceeded. Failing fast to trigger instant local fallbacks.");
+          throw err;
+        }
+
         // Delay before attempt or model rotation
         await new Promise((resolve) => setTimeout(resolve, 600 * attempt));
       }

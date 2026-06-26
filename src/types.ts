@@ -63,3 +63,22 @@ export interface ActiveDebate {
   challenges: CrossExaminationState[];
   synthesis: SynthesisReport | null;
 }
+
+export interface PrecedentCase {
+  id: string;
+  title: string;
+  query: string;
+  timestamp: string;
+  verdictScore: number;
+  verdictLabel: string;
+  summary: string;
+  selectedJurors: JurorId[];
+  deliberations: Record<JurorId, DeliberationState>;
+  challenges: CrossExaminationState[];
+  agreements: string[];
+  disagreements: string[];
+  vulnerabilities: string[];
+  biasVariance: number;
+  contradictionAlerts: string[];
+}
+
